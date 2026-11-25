@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Cellar &amp; Whisky Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout idea: a printed list on a white page, one long scroll grouped by section, columns ruled like a wine list */
+  --paper:#ffffff;
+  --ink:#1d1b1a;
+  --muted:#7a7470;
+  --rule:#e4e0dc;
+  --wash:#f6f4f2;
+  --accent:#6b1f2a;
+  --ok:#3f6b3a; --warn:#a0701c; --past:#9a3b32;
+  --display:"Bodoni Moda","Didot","Bodoni 72",Georgia,serif;
+  --body:"EB Garamond","Garamond","Times New Roman",Georgia,serif;
+  color-scheme:light;
+}
+body.whisky{--accent:#7a4a17}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink)}
+body{font-family:var(--body);font-size:17px;line-height:1.35;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Header */
+header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
+.top{display:flex;align-items:center;gap:12px;max-width:860px;margin:0 auto}
+.mark{font-family:var(--display);font-size:26px;letter-spacing:.02em;line-height:1;flex:none}
+.mark small{display:block;font-family:var(--body);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.switch{margin-left:auto;display:flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden;flex:none}
+.switch button{border:0;background:none;padding:6px 14px;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.lock{border:0;background:none;width:34px;height:34px;display:grid;place-items:center;color:var(--muted);flex:none}
+.lock.on{color:var(--accent)}
+.searchrow{display:flex;gap:8px;max-width:860px;margin:10px auto 0}
+.search{flex:1;min-width:0;border:1px solid var(--rule);border-radius:8px;padding:8px 12px;background:var(--wash);font-size:16px}
+.fbtn{border:1px solid var(--rule);background:var(--paper);border-radius:8px;padding:0 12px;font-size:14px;letter-spacing:.06em;white-space:nowrap}
+.fbtn b[hidden]{display:none}
+.fbtn b{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;margin-left:4px;padding:0 5px;font-weight:500}
+.tabs{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;max-width:860px;margin:6px auto 0;padding:6px 0 8px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;background:none;padding:2px 0;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);white-space:nowrap;border-bottom:1px solid transparent}
+.tabs button.cur{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* Active filter chips + summary */
+.summary{max-width:860px;margin:0 auto;padding:10px 16px 0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:999px;padding:2px 10px;font-size:13px;background:var(--paper);color:var(--ink)}
+.chip button{border:0;background:none;padding:0;color:var(--muted);font-size:15px;line-height:1}
+.clear{border:0;background:none;color:var(--accent);font-size:13px;text-decoration:underline;padding:0}
+
+/* List */
+main{max-width:860px;margin:0 auto;padding:4px 16px 120px}
+.sec{scroll-margin-top:var(--hdr,150px)}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:30px 0 4px}
+.sechead h2{font-family:var(--body);font-weight:400;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:0}
+.sechead .big{font-family:var(--display);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.colhead{display:grid;grid-template-columns:var(--cols);gap:10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--ink)}
+.colhead span:not(:first-child){text-align:right}
+:root{--cols:1fr 46px 58px 26px}
+body.prices{--cols:1fr 46px 58px 64px 26px}
+body.whisky{--cols:1fr 58px 26px}
+body.whisky.prices{--cols:1fr 58px 26px}
+.sub{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);margin:18px 0 0;padding-bottom:4px;display:flex;justify-content:space-between}
+.sub i{font-style:normal;color:var(--muted);letter-spacing:.08em}
+.row{display:grid;grid-template-columns:var(--cols);gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule);cursor:pointer}
+.row:hover{background:var(--wash)}
+.nm{min-width:0}
+.nm .n{font-size:17px}
+.nm .q{color:var(--muted);font-size:14px;margin-left:4px;font-variant-numeric:tabular-nums}
+.nm .d{display:block;color:var(--muted);font-size:14px;font-style:italic;margin-top:1px}
+.dw{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dot.now{background:var(--ok)}.dot.soon{background:var(--warn)}.dot.hold{background:#8a9bb0}.dot.past{background:var(--past)}
+.c{text-align:right;font-variant-numeric:tabular-nums;font-size:16px;white-space:nowrap}
+.loc{font-size:13px;letter-spacing:.06em;color:var(--muted)}
+.bm{border:0;background:none;padding:0;color:var(--rule);justify-self:end;line-height:0}
+.bm.on{color:var(--accent)}
+.empty{padding:60px 0;text-align:center;color:var(--muted);font-style:italic}
+.note{max-width:860px;margin:12px auto 0;padding:10px 14px;border:1px solid var(--rule);border-radius:8px;font-size:14px;color:var(--muted)}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;background:rgba(20,18,17,.35);z-index:40;display:none}
+.scrim.open{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--paper);border-radius:16px 16px 0 0;max-height:88%;overflow:auto;padding:18px 18px calc(24px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .22s ease;max-width:640px;margin:0 auto;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+.sheet.open{transform:none}
+@media (prefers-reduced-motion:reduce){.sheet{transition:none}}
+.sheet h3{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 4px;text-wrap:balance}
+.sheet .x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:26px;color:var(--muted);line-height:1}
+.fg{margin:16px 0 0}
+.fg h4{font-weight:400;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{border:1px solid var(--rule);border-radius:999px;background:var(--paper);padding:5px 12px;font-size:15px}
+.opt[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.rng{display:flex;gap:8px;align-items:center}
+.rng input,.ef input,.ef select,.ef textarea{border:1px solid var(--rule);border-radius:8px;padding:7px 10px;background:var(--wash);font-size:16px;width:100%}
+.rng input{width:90px}
+.primary{display:block;width:100%;margin-top:20px;border:0;border-radius:10px;padding:12px;background:var(--ink);color:var(--paper);font-size:16px;letter-spacing:.08em}
+.ghost{border:1px solid var(--rule);border-radius:10px;padding:10px 14px;background:var(--paper);font-size:15px}
+.danger{color:var(--past)}
+dl.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:14px 0 0;font-size:16px}
+dl.facts dt{color:var(--muted);font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding-top:2px}
+dl.facts dd{margin:0;font-variant-numeric:tabular-nums}
+.ef{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.ef label{display:flex;flex-direction:column;gap:4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ef .full{grid-column:1/-1}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.err{color:var(--past);font-size:14px;min-height:1.2em;margin-top:8px}
+
+/* PIN */
+.pin{display:flex;justify-content:center;gap:12px;margin:18px 0 8px}
+.pin span{width:14px;height:14px;border-radius:50%;border:1px solid var(--ink)}
+.pin span.f{background:var(--ink)}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center;margin-top:12px}
+.pad button{height:56px;border:1px solid var(--rule);border-radius:50%;background:var(--paper);font-family:var(--display);font-size:22px}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;border:0;border-radius:999px;background:var(--accent);color:#fff;padding:12px 18px;font-size:15px;letter-spacing:.06em;box-shadow:0 6px 18px rgba(0,0,0,.18);display:none}
+body.editing .fab{display:block}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:999px;font-size:14px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (max-width:420px){
+  body{font-size:16px}
+  .nm .n{font-size:16px}
+  .mark{font-size:22px}
+  .switch button{padding:6px 10px;font-size:12px}
+  :root{--cols:1fr 40px 50px 22px}
+  body.prices{--cols:1fr 38px 46px 54px 22px}
+  body.whisky,body.whisky.prices{--cols:1fr 52px 22px}
+}
+</style>
+</head>
+<body>
+<header id="hdr">
+  <div class="top">
+    <div class="mark" id="mark">The Cellar<small id="marksub">Wine list</small></div>
+    <div class="switch" role="group" aria-label="Collection">
+      <button id="libWine" aria-pressed="true">Wine</button>
+      <button id="libWhisky" aria-pressed="false">Whisky</button>
+    </div>
+    <button class="lock" id="lockBtn" aria-label="Unlock edit mode" title="Edit mode">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="10" rx="2"/><path id="shackle" d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    </button>
+  </div>
+  <div class="searchrow">
+    <input class="search" id="q" type="search" placeholder="Search producer, region, vintage…" autocomplete="off" aria-label="Search">
+    <button class="fbtn" id="fOpen">Filter<b id="fCount" hidden>0</b></button>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+</header>
+
+<div class="summary" id="summary"></div>
+<div class="note" id="status" hidden></div>
+<main id="list"></main>
+
+<button class="fab" id="addBtn">+ Add bottle</button>
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><button class="x" id="sheetX" aria-label="Close">×</button><div id="sheetBody"></div></section>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycby_hrjzS7el2T9fuAbHEO40XdlVv70-7bD5iFx3tRMZQKCv3GbdLskOuY0soOSal1R_LA/exec";
+const PUBLIC_FIELDS_ONLY = d => { const o = {...d}; delete o.price; return o; };
+const YEAR = new Date().getFullYear();
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const sstore = {
+  get(k){ try { return sessionStorage.getItem(k); } catch { return null; } },
+  set(k, v){ try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} }
+};
+
+const state = {
+  lib: store.get("lib", "wine"),
+  q: "",
+  f: { wine: {}, whisky: {} },
+  sort: { wine: "list", whisky: "list" },
+  items: [], loaded: false,
+  editing: !!sstore.get("pin"),
+  canWrite: true,
+  marks: new Set(store.get("marks", [])),
+};
+let PIN_VALUE = sstore.get("pin");
+
+/* ---------- Derived fields ---------- */
+function windowStatus(d){
+  if (!d.from || !d.to) return null;
+  if (YEAR < d.from) return {k:"hold", t:"Hold"};
+  if (YEAR > d.to) return {k:"past", t:"Past window"};
+  if (d.to - YEAR <= 2) return {k:"soon", t:"Drink soon"};
+  return {k:"now", t:"Drink now"};
+}
+function fmtPrice(p){ return p ? "$" + Number(p).toLocaleString("en-AU", {maximumFractionDigits:0}) : "—"; }
+function sizeTag(s){ return s && s !== "750ml" ? ({"1.5L":"Magnum","375ml":"Half","350ml":"350ml"}[s] || s) : ""; }
+
+/* ---------- Filter definitions ---------- */
+const FILTERS = {
+  wine: [
+    {key:"col", label:"Style", get:d=>d.col, order:["Sparkling","White","Red","Rosé","Sweet & Fortified"]},
+    {key:"sec", label:"Section", get:d=>d.sec},
+    {key:"sub", label:"Region", get:d=>d.sub},
+    {key:"grape", label:"Grape", get:d=>d.grape},
+    {key:"dw", label:"Drinking window", get:d=>windowStatus(d)?.t || "No window", order:["Drink now","Drink soon","Hold","Past window","No window"]},
+    {key:"fmt", label:"Format", get:d=>sizeTag(d.size) || "Bottle", order:["Bottle","Magnum","Half","350ml"]},
+    {key:"loc", label:"Location", get:d=>locZones(d.loc), multi:true},
+  ],
+  whisky: [
+    {key:"sec", label:"Country", get:d=>d.sec},
+    {key:"sub", label:"Distillery / group", get:d=>d.sub},
+    {key:"style", label:"Style", get:d=>[d.peated?"Peated":"Unpeated", (d.abv>=55?"Cask strength":null)].filter(Boolean), multi:true, order:["Peated","Unpeated","Cask strength"]},
+    {key:"age", label:"Age statement", get:d=>!d.age?"No age stated":d.age>=25?"25 years +":d.age>=18?"18–24 years":d.age>=12?"12–17 years":"Under 12", order:["Under 12","12–17 years","18–24 years","25 years +","No age stated"]},
+    {key:"loc", label:"Location", get:d=>String(d.loc||"").split("/").filter(Boolean), multi:true},
+  ]
+};
+function locZones(loc){
+  return String(loc||"").split("/").filter(Boolean).map(l => l === "Fridge" ? "Fridge" : ({A:"Rack A",B:"Rack B",C:"Rack C",L:"Cupboards"}[l[0]] || l));
+}
+const SORTS = {
+  wine: [["list","List order"],["vintage","Vintage, oldest first"],["vintage-d","Vintage, youngest first"],["window","Drink soonest first"],["price-d","Price, highest first"],["price","Price, lowest first"]],
+  whisky: [["list","List order"],["abv-d","Strength, highest first"],["age-d","Age, oldest first"],["name","Name, A–Z"]],
+};
+
+function matches(d){
+  const f = state.f[state.lib];
+  for (const def of FILTERS[state.lib]){
+    const sel = f[def.key];
+    if (!sel || !sel.length) continue;
+    const v = def.get(d); const vals = Array.isArray(v) ? v : [v];
+    if (!vals.some(x => sel.includes(x))) return false;
+  }
+  if (f.marked && !state.marks.has(d.id)) return false;
+  if (state.lib === "wine" && (f.vmin || f.vmax)){
+    const y = parseInt(d.vin); if (!y) return false;
+    if (f.vmin && y < f.vmin) return false;
+    if (f.vmax && y > f.vmax) return false;
+  }
+  if (state.q){
+    const hay = [d.name,d.det,d.sec,d.sub,d.vin,d.grape,d.col,d.loc].join(" ").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+    const terms = state.q.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().split(/\s+/).filter(Boolean);
+    if (!terms.every(t => hay.includes(t))) return false;
+  }
+  return true;
+}
+function sortItems(list){
+  const s = state.sort[state.lib]; const vy = d => parseInt(d.vin) || (d.vin === "NV" ? 0 : 9999);
+  const cmp = {
+    list:(a,b)=>a.ord-b.ord,
+    vintage:(a,b)=>vy(a)-vy(b)||a.ord-b.ord,
+    "vintage-d":(a,b)=>vy(b)-vy(a)||a.ord-b.ord,
+    window:(a,b)=>(a.to||9999)-(b.to||9999)||(a.from||0)-(b.from||0),
+    "price-d":(a,b)=>(b.price||0)-(a.price||0),
+    price:(a,b)=>(a.price||1e9)-(b.price||1e9),
+    "abv-d":(a,b)=>(b.abv||0)-(a.abv||0),
+    "age-d":(a,b)=>(b.age||0)-(a.age||0),
+    name:(a,b)=>a.name.localeCompare(b.name),
+  }[s] || ((a,b)=>a.ord-b.ord);
+  return list.slice().sort(cmp);
+}
+
+/* ---------- Render ---------- */
+function libItems(){ return state.items.filter(d => d.lib === state.lib && d.qty > 0); }
+function activeCount(){
+  const f = state.f[state.lib]; let n = 0;
+  for (const k in f){ if (Array.isArray(f[k])) n += f[k].length; else if (f[k]) n++; }
+  return n + (state.sort[state.lib] !== "list" ? 1 : 0);
+}
+function render(){
+  const wine = state.lib === "wine";
+  document.body.classList.toggle("whisky", !wine);
+  document.body.classList.toggle("editing", state.editing);
+  document.body.classList.toggle("prices", state.editing && wine);
+  $("#libWine").setAttribute("aria-pressed", wine);
+  $("#libWhisky").setAttribute("aria-pressed", !wine);
+  $("#mark").firstChild.nodeValue = wine ? "The Cellar" : "Whisky Library";
+  $("#marksub").textContent = wine ? "Wine list" : "Whisky & spirits";
+  const lb = $("#lockBtn"); lb.classList.toggle("on", state.editing);
+  lb.setAttribute("aria-label", state.editing ? "Lock edit mode" : "Unlock edit mode");
+  $("#shackle").setAttribute("d", state.editing ? "M8 11V8a4 4 0 0 1 7.6-1.8" : "M8 11V8a4 4 0 0 1 8 0v3");
+  const n = activeCount(); const fc = $("#fCount"); fc.hidden = !n; fc.textContent = n;
+
+  const all = libItems();
+  const shown = sortItems(all.filter(matches));
+  const bottles = shown.reduce((a,d)=>a+d.qty,0);
+  const total = all.reduce((a,d)=>a+d.qty,0);
+
+  // summary + active chips
+  const f = state.f[state.lib]; let chips = "";
+  for (const def of FILTERS[state.lib]) for (const v of (f[def.key]||[])) chips += `<span class="chip">${esc(v)}<button data-rm="${def.key}" data-v="${esc(v)}" aria-label="Remove ${esc(v)}">×</button></span>`;
+  if (f.marked) chips += `<span class="chip">Bookmarked<button data-rm="marked" aria-label="Remove bookmarked filter">×</button></span>`;
+  if (f.vmin || f.vmax) chips += `<span class="chip">Vintage ${f.vmin||"…"}–${f.vmax||"…"}<button data-rm="vint" aria-label="Remove vintage filter">×</button></span>`;
+  let sumTxt = shown.length === all.length && !state.q ? `${total} bottles` : `${bottles} of ${total} bottles`;
+  if (state.editing && wine){
+    const val = shown.reduce((a,d)=>a+(d.price||0)*d.qty,0);
+    sumTxt += ` · ${fmtPrice(val)} at cost`;
+  }
+  $("#summary").innerHTML = `<span>${sumTxt}</span>${chips}${chips||state.q?'<button class="clear" id="clearAll">Clear all</button>':""}`;
+
+  // list
+  if (!state.loaded){ $("#list").innerHTML = ""; $("#tabs").innerHTML = ""; return; }
+  if (!shown.length){ $("#list").innerHTML = `<p class="empty">${all.length ? "Nothing matches. Try clearing a filter." : "No bottles yet."}</p>`; $("#tabs").innerHTML=""; return; }
+  const grouped = state.sort[state.lib] === "list";
+  let html = "", secs = [];
+  const colhead = wine
+    ? `<div class="colhead"><span></span><span>Vint.</span><span>Loc.</span>${state.editing?"<span>Paid</span>":""}<span></span></div>`
+    : `<div class="colhead"><span></span><span>Loc.</span><span></span></div>`;
+  if (grouped){
+    let curSec = null, curSub = null;
+    for (const d of shown){
+      if (d.sec !== curSec){
+        if (curSec !== null) html += "</div>";
+        curSec = d.sec; curSub = null; const id = "s-" + secs.length; secs.push([id, d.sec]);
+        const cnt = shown.filter(x=>x.sec===d.sec).reduce((a,x)=>a+x.qty,0);
+        html += `<div class="sec" id="${id}"><div class="sechead"><h2>${esc(d.sec)}</h2><span class="big">${cnt} btl</span></div>${colhead}`;
+      }
+      if (d.sub !== curSub && d.sub !== d.sec){ curSub = d.sub; html += `<div class="sub">${esc(d.sub)}</div>`; }
+      html += rowHTML(d, wine);
+    }
+    html += "</div>";
+  } else {
+    html = `<div class="sec">${colhead}${shown.map(d=>rowHTML(d,wine,true)).join("")}</div>`;
+  }
+  $("#list").innerHTML = html;
+  $("#tabs").innerHTML = secs.map(([id,t])=>`<button data-go="${id}">${esc(t)}</button>`).join("");
+  setHdr();
+}
+function rowHTML(d, wine, showSec){
+  const ws = wine ? windowStatus(d) : null;
+  const tag = wine ? sizeTag(d.size) : "";
+  const det = [showSec ? d.sub : null, d.det, tag].filter(Boolean).join(" · ");
+  return `<div class="row" data-id="${esc(d.id)}" tabindex="0" role="button">
+    <div class="nm"><span class="n">${esc(d.name)}</span>${d.qty>1?`<span class="q">×${d.qty}</span>`:""}
+      ${det?`<span class="d">${esc(det)}</span>`:""}
+      ${ws?`<span class="dw"><span class="dot ${ws.k}"></span>${d.from}–${d.to} · ${ws.t}</span>`:""}</div>
+    ${wine?`<span class="c">${esc(d.vin)}</span>`:""}
+    <span class="c loc">${esc(d.loc)}</span>
+    ${wine&&state.editing?`<span class="c">${fmtPrice(d.price)}</span>`:""}
+    <button class="bm ${state.marks.has(d.id)?"on":""}" data-mark="${esc(d.id)}" aria-label="Bookmark ${esc(d.name)}" aria-pressed="${state.marks.has(d.id)}">
+      <svg width="14" height="18" viewBox="0 0 14 18"><path d="M1 1h12v16l-6-4.5L1 17z" fill="${state.marks.has(d.id)?"currentColor":"none"}" stroke="currentColor" stroke-width="1.3"/></svg></button>
+  </div>`;
+}
+function setHdr(){ document.documentElement.style.setProperty("--hdr", ($("#hdr").offsetHeight + 8) + "px"); }
+
+/* ---------- Sheets ---------- */
+function openSheet(html){ $("#sheetBody").innerHTML = html; $("#sheet").classList.add("open"); $("#scrim").classList.add("open"); }
+function closeSheet(){ $("#sheet").classList.remove("open"); $("#scrim").classList.remove("open"); }
+$("#sheetX").onclick = closeSheet; $("#scrim").onclick = closeSheet;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+
+function filterSheet(){
+  const lib = state.lib, f = state.f[lib], items = libItems();
+  let h = `<h3>Filter ${lib === "wine" ? "wines" : "whisky"}</h3>`;
+  h += `<div class="fg"><h4>Sort</h4><div class="opts">${SORTS[lib].map(([k,t])=>`<button class="opt" data-sort="${k}" aria-pressed="${state.sort[lib]===k}">${t}</button>`).join("")}</div></div>`;
+  h += `<div class="fg"><h4>Shortlist</h4><div class="opts"><button class="opt" data-flag="marked" aria-pressed="${!!f.marked}">Bookmarked only</button></div></div>`;
+  for (const def of FILTERS[lib]){
+    const counts = new Map();
+    for (const d of items){ const v = def.get(d); for (const x of (Array.isArray(v)?v:[v])) if (x) counts.set(x, (counts.get(x)||0) + d.qty); }
+    let vals = [...counts.keys()];
+    if (def.order) vals.sort((a,b)=>{const ia=def.order.indexOf(a), ib=def.order.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib);});
+    else if (def.key === "sec" || def.key === "sub") { const ord = new Map(); for (const d of items){ const v=def.get(d); if(!ord.has(v)) ord.set(v, d.ord);} vals.sort((a,b)=>ord.get(a)-ord.get(b)); }
+    else vals.sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+    h += `<div class="fg"><h4>${def.label}</h4><div class="opts">${vals.map(v=>`<button class="opt" data-fk="${def.key}" data-v="${esc(v)}" aria-pressed="${(f[def.key]||[]).includes(v)}">${esc(v)} <span style="opacity:.55">${counts.get(v)}</span></button>`).join("")}</div></div>`;
+    if (def.key === "sub" && lib === "wine"){
+      h += `<div class="fg"><h4>Vintage</h4><div class="rng"><input id="vmin" type="number" inputmode="numeric" placeholder="From" value="${f.vmin||""}" aria-label="Vintage from"><span>to</span><input id="vmax" type="number" inputmode="numeric" placeholder="To" value="${f.vmax||""}" aria-label="Vintage to"></div></div>`;
+    }
+  }
+  h += `<button class="primary" id="fDone">Show bottles</button>`;
+  openSheet(h);
+  const sb = $("#sheetBody");
+  sb.onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.sort){ state.sort[lib] = b.dataset.sort; sb.querySelectorAll("[data-sort]").forEach(x=>x.setAttribute("aria-pressed", x===b)); }
+    else if (b.dataset.flag){ f.marked = !f.marked; b.setAttribute("aria-pressed", !!f.marked); }
+    else if (b.dataset.fk){ const arr = f[b.dataset.fk] = f[b.dataset.fk] || []; const v = b.dataset.v; const i = arr.indexOf(v); i<0?arr.push(v):arr.splice(i,1); b.setAttribute("aria-pressed", i<0); }
+    else if (b.id === "fDone"){ closeSheet(); }
+    render();
+  };
+  const vr = () => { f.vmin = parseInt($("#vmin").value)||0; f.vmax = parseInt($("#vmax").value)||0; render(); };
+  if ($("#vmin")){ $("#vmin").oninput = vr; $("#vmax").oninput = vr; }
+}
+
+function detailSheet(id){
+  const d = state.items.find(x=>x.id===id); if (!d) return;
+  const wine = d.lib === "wine";
+  if (state.editing) return editSheet(d);
+  const ws = wine ? windowStatus(d) : null;
+  let h = `<h3>${esc(d.name)}${wine&&d.vin?` <span style="color:var(--muted)">${esc(d.vin)}</span>`:""}</h3>
+  <div style="color:var(--muted);font-style:italic">${esc(d.det||"")}</div><dl class="facts">
+  <dt>Section</dt><dd>${esc(d.sec)}${d.sub!==d.sec?" · "+esc(d.sub):""}</dd>
+  <dt>Bottles</dt><dd>${d.qty}${wine&&sizeTag(d.size)?" · "+sizeTag(d.size):""}</dd>
+  <dt>Location</dt><dd>${esc(d.loc)}</dd>`;
+  if (wine){
+    if (d.grape) h += `<dt>Grape</dt><dd>${esc(d.grape)}</dd>`;
+    h += `<dt>Drink</dt><dd>${d.from?`${d.from}–${d.to} · ${ws.t}`:"No window set"}</dd>`;
+  } else {
+    if (d.abv) h += `<dt>Strength</dt><dd>${d.abv}%${d.abv>=55?" · cask strength":""}</dd>`;
+    h += `<dt>Style</dt><dd>${d.peated?"Peated":"Unpeated"}</dd>`;
+  }
+  h += `</dl><div class="acts"><button class="ghost" data-mark="${esc(d.id)}">${state.marks.has(d.id)?"Remove bookmark":"Bookmark"}</button></div>`;
+  openSheet(h);
+  $("#sheetBody").onclick = e => { const b = e.target.closest("[data-mark]"); if (b){ toggleMark(b.dataset.mark); detailSheet(id); } };
+}
+
+function editSheet(d){
+  const isNew = !d.id; const lib = d.lib || state.lib; const wine = lib === "wine";
+  const secs = [...new Set(state.items.filter(x=>x.lib===lib).map(x=>x.sec))];
+  const subs = [...new Set(state.items.filter(x=>x.lib===lib).map(x=>x.sub))];
+  let h = `<h3>${isNew ? "Add a bottle" : "Edit " + esc(d.name)}</h3>
+  <form class="ef" id="ef" autocomplete="off">
+    <label class="full" for="e_name">Name<input id="e_name" required value="${esc(d.name||"")}"></label>
+    <label class="full" for="e_det">Details<input id="e_det" value="${esc(d.det||"")}" placeholder="${wine?"Appellation · grape":"Cask · ABV%"}"></label>
+    <label for="e_sec">Section<input id="e_sec" list="secl" required value="${esc(d.sec||"")}"></label>
+    <label for="e_sub">Sub-section<input id="e_sub" list="subl" required value="${esc(d.sub||"")}"></label>
+    <datalist id="secl">${secs.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <datalist id="subl">${subs.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <label for="e_qty">Bottles<input id="e_qty" type="number" inputmode="numeric" min="0" value="${d.qty??1}"></label>
+    <label for="e_loc">Location<input id="e_loc" value="${esc(d.loc||"")}" placeholder="${wine?"B04 or L4/L5":"LU"}"></label>`;
+  if (wine) h += `
+    <label for="e_vin">Vintage<input id="e_vin" value="${esc(d.vin||"")}" placeholder="2019 or NV"></label>
+    <label for="e_size">Size<select id="e_size">${["750ml","1.5L","375ml","350ml","3L"].map(s=>`<option ${s===(d.size||"750ml")?"selected":""}>${s}</option>`).join("")}</select></label>
+    <label for="e_col">Style<select id="e_col">${["Red","White","Sparkling","Rosé","Sweet & Fortified"].map(s=>`<option ${s===(d.col||"Red")?"selected":""}>${s}</option>`).join("")}</select></label>
+    <label for="e_grape">Grape<input id="e_grape" value="${esc(d.grape||"")}"></label>
+    <label for="e_price">Paid per bottle (A$)<input id="e_price" type="number" inputmode="decimal" min="0" value="${d.price||""}"></label>
+    <span></span>
+    <label for="e_from">Drink from<input id="e_from" type="number" inputmode="numeric" value="${d.from||""}"></label>
+    <label for="e_to">Drink until<input id="e_to" type="number" inputmode="numeric" value="${d.to||""}"></label>`;
+  else h += `
+    <label for="e_abv">ABV %<input id="e_abv" type="number" inputmode="decimal" step="0.1" value="${d.abv||""}"></label>
+    <label for="e_age">Age (years)<input id="e_age" type="number" inputmode="numeric" value="${d.age||""}"></label>
+    <label class="full" style="flex-direction:row;align-items:center;gap:8px" for="e_peat"><input id="e_peat" type="checkbox" style="width:auto" ${d.peated?"checked":""}> Peated</label>`;
+  h += `</form><div class="err" id="eErr"></div><div class="acts">
+    ${isNew?"":`<button class="ghost" id="eDrink">Drank one</button>`}
+    <button class="ghost" id="eSave" style="background:var(--ink);color:var(--paper);border-color:var(--ink)">${isNew?"Add":"Save"}</button>
+    ${isNew?"":`<button class="ghost danger" id="eDel">Remove</button>`}
+  </div>`;
+  openSheet(h);
+  const sb = $("#sheetBody"); sb.onclick = null;
+  $("#ef").onsubmit = e => { e.preventDefault(); save(); };
+  $("#eSave").onclick = save;
+  if (!isNew){
+    $("#eDrink").onclick = async () => {
+      const q = Math.max(0, d.qty - 1);
+      if (await write(d.lib, d.id, {...stripId(d), qty:q})) { toast(q ? `${d.name}: ${q} left` : `${d.name}: finished, removed from the list`); closeSheet(); }
+    };
+    let armed = false;
+    $("#eDel").onclick = async () => {
+      if (!armed){ armed = true; $("#eDel").textContent = "Tap again to remove"; return; }
+      if (await write(d.lib, d.id, null)) { toast("Removed"); closeSheet(); }
+    };
+  }
+  async function save(){
+    const g = id => sb.querySelector("#"+id);
+    const name = g("e_name").value.trim(), sec = g("e_sec").value.trim(), sub = g("e_sub").value.trim();
+    if (!name || !sec || !sub){ $("#eErr").textContent = "Name, section and sub-section are needed."; return; }
+    const num = v => v === "" ? null : Number(v);
+    const out = {...stripId(d), lib, name, det:g("e_det").value.trim(), sec, sub, qty: Math.max(0, parseInt(g("e_qty").value)||0), loc:g("e_loc").value.trim()};
+    if (wine){
+      Object.assign(out, {vin:g("e_vin").value.trim(), size:g("e_size").value, col:g("e_col").value, grape:g("e_grape").value.trim(), price:num(g("e_price").value)});
+      const fr = num(g("e_from").value), to = num(g("e_to").value);
+      if ((fr && !to) || (!fr && to) || (fr && to && fr > to)){ $("#eErr").textContent = "Give both drinking-window years, with the first no later than the second."; return; }
+      out.from = fr; out.to = to;
+    } else {
+      Object.assign(out, {abv:num(g("e_abv").value), age:num(g("e_age").value), peated:g("e_peat").checked});
+    }
+    if (isNew){
+      const same = state.items.filter(x=>x.lib===lib && x.sec===sec && x.sub===sub);
+      const base = same.length ? Math.max(...same.map(x=>x.ord)) : Math.max(0, ...state.items.filter(x=>x.lib===lib).map(x=>x.ord));
+      out.ord = base + 0.01 + Math.random()*0.001;
+    }
+    Object.keys(out).forEach(k => out[k] === null && delete out[k]);
+    delete out.lib;
+    if (await write(lib, d.id || "", {...out, lib})) { toast(isNew ? "Added" : "Saved"); closeSheet(); }
+  }
+}
+function stripId(d){ const o = {...d}; delete o.id; return o; }
+
+async function api(body){
+  const r = await fetch(API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body)});
+  return r.json();
+}
+const ERR = {
+  wrong_pin: "That PIN isn't right.",
+  locked: "Too many wrong PINs. Editing is locked for 15 minutes.",
+  pin_not_set: "Editing isn't set up yet: add a PIN in the Sheet's script settings.",
+  busy: "Another change is being saved. Try again in a moment.",
+};
+async function write(lib, id, data){
+  const btns = document.querySelectorAll("#sheetBody .acts button"); btns.forEach(b => b.disabled = true);
+  try {
+    const j = data ? await api({pin: PIN_VALUE, action:"save", lib, item: {...data, id}})
+                   : await api({pin: PIN_VALUE, action:"delete", lib, id});
+    if (!j.ok){
+      if (j.error === "wrong_pin" || j.error === "locked") lockEdit();
+      if ($("#eErr")) $("#eErr").textContent = ERR[j.error] || "Couldn't save. Try again.";
+      return false;
+    }
+    await refresh();
+    return true;
+  } catch (e) {
+    if ($("#eErr")) $("#eErr").textContent = "Couldn't save just now. Check the connection and try again.";
+    return false;
+  } finally { btns.forEach(b => b.disabled = false); }
+}
+function lockEdit(){
+  state.editing = false; PIN_VALUE = null; sstore.set("pin", null);
+  state.items = state.items.map(PUBLIC_FIELDS_ONLY); render();
+}
+
+/* ---------- PIN ---------- */
+function pinSheet(){
+  let entry = "";
+  const draw = () => $("#pinDots").innerHTML = [0,1,2,3].map(i=>`<span class="${i<entry.length?"f":""}"></span>`).join("");
+  openSheet(`<h3 style="text-align:center">Edit mode</h3><p style="text-align:center;color:var(--muted);margin:4px 0 0">Enter the PIN to add, edit or remove bottles.</p>
+    <div class="pin" id="pinDots"></div><p id="pinMsg" class="err" style="text-align:center"></p><div class="pad" id="pad">${[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map(k=>k===""?"<span></span>":`<button data-k="${k}" aria-label="${k==="⌫"?"Delete":k}">${k}</button>`).join("")}</div>`);
+  draw();
+  const press = k => {
+    if (k === "⌫") entry = entry.slice(0,-1); else if (entry.length < 4) entry += k;
+    draw();
+    if (entry.length === 4){
+      const tried = entry; entry = "";
+      $("#pinMsg").textContent = "Checking…";
+      api({pin: tried, action: "check"}).then(async j => {
+        if (j.ok){ PIN_VALUE = tried; sstore.set("pin", tried); state.editing = true; closeSheet(); render(); toast("Edit mode on. Tap any bottle to edit."); refresh(); }
+        else { $("#pinMsg").textContent = ERR[j.error] || "Couldn't check the PIN."; const p = $("#pinDots"); p.classList.remove("shake"); void p.offsetWidth; p.classList.add("shake"); setTimeout(draw, 250); }
+      }).catch(() => { $("#pinMsg").textContent = "Couldn't reach the list. Check the connection."; draw(); });
+    }
+  };
+  $("#sheetBody").onclick = e => { const b = e.target.closest("[data-k]"); if (b) press(b.dataset.k); };
+  $("#sheetBody").onkeydown = null;
+  window.__pinKey = e => { if (!$("#sheet").classList.contains("open") || !$("#pad")) return; if (/^\d$/.test(e.key)) press(e.key); else if (e.key === "Backspace") press("⌫"); };
+}
+document.addEventListener("keydown", e => window.__pinKey && window.__pinKey(e));
+
+/* ---------- Events ---------- */
+function toggleMark(id){ state.marks.has(id) ? state.marks.delete(id) : state.marks.add(id); store.set("marks", [...state.marks]); render(); }
+function toast(t){ const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove("show"), 2200); }
+function setLib(l){ state.lib = l; store.set("lib", l); window.scrollTo(0,0); render(); }
+$("#libWine").onclick = () => setLib("wine");
+$("#libWhisky").onclick = () => setLib("whisky");
+$("#lockBtn").onclick = () => { if (state.editing){ lockEdit(); toast("Locked. Guests can browse safely."); } else pinSheet(); };
+$("#fOpen").onclick = filterSheet;
+$("#addBtn").onclick = () => editSheet({lib: state.lib, qty: 1});
+let qt; $("#q").oninput = e => { clearTimeout(qt); qt = setTimeout(()=>{ state.q = e.target.value.trim(); render(); }, 120); };
+$("#list").onclick = e => {
+  const m = e.target.closest("[data-mark]"); if (m){ e.stopPropagation(); toggleMark(m.dataset.mark); return; }
+  const r = e.target.closest(".row"); if (r) detailSheet(r.dataset.id);
+};
+$("#list").onkeydown = e => { if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("row")){ e.preventDefault(); detailSheet(e.target.dataset.id); } };
+$("#tabs").onclick = e => { const b = e.target.closest("[data-go]"); if (b) document.getElementById(b.dataset.go)?.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); };
+$("#summary").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return; const f = state.f[state.lib];
+  if (b.id === "clearAll"){ state.f[state.lib] = {}; state.q = ""; $("#q").value = ""; state.sort[state.lib] = "list"; }
+  else if (b.dataset.rm === "marked") f.marked = false;
+  else if (b.dataset.rm === "vint"){ f.vmin = f.vmax = 0; }
+  else if (b.dataset.rm){ f[b.dataset.rm] = (f[b.dataset.rm]||[]).filter(x=>x!==b.dataset.v); }
+  render();
+};
+// highlight current section tab while scrolling
+let ticking = false;
+window.addEventListener("scroll", () => { if (ticking) return; ticking = true; requestAnimationFrame(() => {
+  ticking = false; const top = $("#hdr").offsetHeight + 20; let cur = null;
+  document.querySelectorAll(".sec[id]").forEach(s => { if (s.getBoundingClientRect().top <= top) cur = s.id; });
+  document.querySelectorAll("#tabs button").forEach(b => { const on = b.dataset.go === cur; if (on !== b.classList.contains("cur")){ b.classList.toggle("cur", on); if (on) b.scrollIntoView({block:"nearest", inline:"center"}); } });
+}); }, {passive:true});
+window.addEventListener("resize", setHdr);
+
+/* ---------- Data ---------- */
+function status(t){ const s = $("#status"); s.hidden = !t; s.textContent = t || ""; }
+function load(list){ state.items = list; state.loaded = true; status(""); render(); }
+async function fetchList(){
+  if (PIN_VALUE){
+    const j = await api({pin: PIN_VALUE, action: "list"});
+    if (j.ok) return j;
+    if (j.error === "wrong_pin" || j.error === "locked") lockEdit();
+  }
+  const r = await fetch(API);
+  return r.json();
+}
+async function refresh(){
+  try {
+    const j = await fetchList();
+    if (!j || !j.ok) throw j;
+    const items = [...j.wine.map(x => ({...x, lib: "wine"})), ...j.whisky.map(x => ({...x, lib: "whisky"}))];
+    store.set("cache", items.map(PUBLIC_FIELDS_ONLY));
+    load(items);
+  } catch (e) {
+    status(state.loaded ? "Couldn't refresh. This is the last copy loaded." : "The list couldn't be loaded. Check the connection and reload.");
+  }
+}
+const cached = store.get("cache", null);
+if (cached && cached.length) load(cached); else { render(); status("Opening the cellar…"); }
+refresh();
+</script>
+</body>
+</html>
