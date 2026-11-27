@@ -106,6 +106,11 @@ body.whisky.prices{--cols:1fr 58px 26px}
 .danger{color:var(--past)}
 dl.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:14px 0 0;font-size:16px}
 dl.facts dt{color:var(--muted);font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding-top:2px}
+.tn{margin:18px 0 0;border-top:1px solid var(--rule);padding-top:12px}
+.tn h4{margin:12px 0 3px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tn p{margin:0;font-size:16px;line-height:1.45}
+.tn .sens{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:16px}
+.tn .sens b{font-weight:500;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-top:3px}
 dl.facts dd{margin:0;font-variant-numeric:tabular-nums}
 .ef{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .ef label{display:flex;flex-direction:column;gap:4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -404,7 +409,16 @@ function detailSheet(id){
     if (d.abv) h += `<dt>Strength</dt><dd>${d.abv}%${d.abv>=55?" · cask strength":""}</dd>`;
     h += `<dt>Style</dt><dd>${d.peated?"Peated":"Unpeated"}</dd>`;
   }
-  h += `</dl><div class="acts"><button class="ghost" data-mark="${esc(d.id)}">${state.marks.has(d.id)?"Remove bookmark":"Bookmark"}</button></div>`;
+  h += `</dl>`;
+  const n = wine && NOTES[d.id];
+  if (n){
+    h += `<div class="tn"><div class="sens"><b>Nose</b><span>${esc(n.nose)}</span><b>Palate</b><span>${esc(n.palate)}</span></div>`;
+    if (n.producer) h += `<h4>Producer</h4><p>${esc(n.producer)}</p>`;
+    if (n.vineyard) h += `<h4>Vineyard</h4><p>${esc(n.vineyard)}</p>`;
+    if (n.region) h += `<h4>Region</h4><p>${esc(n.region)}</p>`;
+    h += `</div>`;
+  }
+  h += `<div class="acts"><button class="ghost" data-mark="${esc(d.id)}">${state.marks.has(d.id)?"Remove bookmark":"Bookmark"}</button></div>`;
   openSheet(h);
   $("#sheetBody").onclick = e => { const b = e.target.closest("[data-mark]"); if (b){ toggleMark(b.dataset.mark); detailSheet(id); } };
 }
@@ -595,6 +609,8 @@ async function refresh(){
     status(state.loaded ? "Couldn't refresh. This is the last copy loaded." : "The list couldn't be loaded. Check the connection and reload.");
   }
 }
+let NOTES = store.get("notes", {});
+fetch("notes.json", {cache: "no-cache"}).then(r => r.ok ? r.json() : null).then(j => { if (j){ NOTES = j; store.set("notes", j); } }).catch(()=>{});
 const cached = store.get("cache", null);
 if (cached && cached.length) load(cached); else { render(); status("Opening the cellar…"); }
 refresh();
